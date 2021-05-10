@@ -1,4 +1,3 @@
-from numpy.lib.function_base import extract
 import pdfplumber
 import pandas as pd
 import re
