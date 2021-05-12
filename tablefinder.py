@@ -7,15 +7,36 @@ NAN_VALUE = float("NaN")
 def credit(table_df):
     table_df_temp = table_df.dropna(subset=["Credit"])
     table_df_temp = table_df_temp.drop(["Debit"], axis=1)
-    table_df_temp = table_df_temp.reset_index().drop(["index"], axis=1)
+    table_df_temp = table_df_temp.reset_index()
+    table_df_temp.columns = ["Payment Number Suffix",\
+                             "Date",\
+                             "Description",\
+                             "Amount",\
+                             "Customer Name"
+                             ]
+    print("Credit data extracted")
 
     return table_df_temp
 
 def debit(table_df):
     table_df_temp = table_df.dropna(subset=["Debit"])
     table_df_temp = table_df_temp.drop(["Credit"], axis=1)
-    table_df_temp = table_df_temp.reset_index().drop(["index"], axis=1)
-    print("Credit data extracted")
+    table_df_temp["TTC"] = "true"
+    table_df_temp["Taxe"] = "TVA"
+    table_df_temp["Taxe Percentage"] = int(20)
+    table_df_temp["Currency Code"] = "EUR"
+    table_df_temp = table_df_temp.reset_index()
+    table_df_temp.columns = ["Entry Number",\
+                             "Expense Date",\
+                             "Expense Description",\
+                             "Expense Amount",\
+                             "is Inclusive Tax",\
+                             "Tax Name",\
+                             "Tax Percentage", \
+                             "Currency Code",\
+                             "Expense Account"
+                             ]
+    print("Debit data extracted")
 
     return table_df_temp
 
@@ -30,7 +51,7 @@ def extract_table_data(table):
     table_df_temp = table_df_temp.drop([0])
     table_df_temp = table_df_temp.dropna(subset=["Date"])
     table_df_temp = table_df_temp.reset_index().drop(["index"], axis=1)
-    print("Debit data extracted")
+    print("Bank data extracted")
 
     return table_df_temp
 
@@ -56,8 +77,8 @@ def plumber(pdf_file: str, year: str):
             table = page.extract_table(table_settings={
                         "vertical_strategy": "lines",
                         "horizontal_strategy": "lines",
-                        "explicit_horizontal_lines": [ min(x["top"] \
-                            for x in page.edges) ]
+                        "explicit_horizontal_lines":\
+                             [ min(x["top"] for x in page.edges) ]
                         })
 
             # Cleaning table & Appending Table Data Frame
@@ -70,33 +91,21 @@ def plumber(pdf_file: str, year: str):
     table_df["Date"] = year + "-" + table_df["Date"].astype(str).str[3:5] \
                         + "-"+ table_df["Date"].astype(str).str[0:2]
 
-    table_df["TTC"] = "true"
-    table_df["Taxe"] = "TVA"
-    table_df["Taxe Percentage"] = float(20)
-    table_df["Currency Code"] = "EUR"
     table_df["Compte"]= NAN_VALUE
 
     for condition in range(0, conditions_df.shape[0]):
-        index_values = \
-            (table_df[table_df["Libelle"].str\
+        index_values \
+             = (table_df[table_df["Libelle"].str\
                 .contains(conditions_df["Condition"].loc[condition])]\
-                    .index.values)
+                .index.values)
 
         for index in index_values:
-            table_df["Compte"].loc[index] = \
-                conditions_df["Compte"].loc[condition]
+            table_df["Compte"].loc[index]\
+                 = conditions_df["Compte"].loc[condition]
 
     # Separing Debit and Credit data
     debit_df = debit(table_df)
     credit_df = credit(table_df)
-
-    debit.columns = ["Expense Date", "Expense Description", "Expense Amount",\
-         "is Inclusive Tax", "Tax Name", "Tax Percentage", "Currency Code",\
-             "Expense Account"]
-
-    credit.columns = ["Expense Date", "Expense Description", "Expense Amount",\
-         "is Inclusive Tax", "Tax Name", "Tax Percentage", "Currency Code",\
-             "Expense Account"]
 
     # Saving results en differents files
     table_df.to_excel("table.xlsx")
