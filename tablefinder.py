@@ -30,26 +30,33 @@ def debit(table_df):
                              "Expense Date",\
                              "Expense Description",\
                              "Expense Amount",\
+                             "Expense Account",\
                              "is Inclusive Tax",\
                              "Tax Name",\
                              "Tax Percentage", \
                              "Currency Code",\
-                             "Expense Account"
                              ]
     print("Debit data extracted")
 
     return table_df_temp
 
 def extract_table_data(table):
-    table_df_temp = pd.DataFrame(table, \
-        columns=["ope", "Date", "Libelle",\
-             "Debit", "Credit", "Check"])
+    table_df_temp = pd.DataFrame(table, columns=["ope",\
+                                                 "Date",\
+                                                 "Libelle",\
+                                                 "Debit",\
+                                                 "Credit",\
+                                                 "Check"])
 
      # Cleaning Data Frame
     table_df_temp = table_df_temp.drop(["ope", "Check"], axis=1)
     table_df_temp = table_df_temp.replace("", NAN_VALUE)
     table_df_temp = table_df_temp.drop([0])
     table_df_temp = table_df_temp.dropna(subset=["Date"])
+    table_df_temp["Debit"] = table_df_temp["Debit"].str.replace(",", ".")
+    table_df_temp["Credit"] = table_df_temp["Credit"].str.replace(",", ".")
+    table_df_temp["Debit"] = table_df_temp["Debit"].astype(float)
+    table_df_temp["Credit"] = table_df_temp["Credit"].astype(float)
     table_df_temp = table_df_temp.reset_index().drop(["index"], axis=1)
     print("Bank data extracted")
 
@@ -108,9 +115,9 @@ def plumber(pdf_file: str, year: str):
     credit_df = credit(table_df)
 
     # Saving results en differents files
-    table_df.to_excel("table.xlsx")
-    debit_df.to_csv("debit.csv", index=False)
-    credit_df.to_csv("credit.csv", index=False)
+    table_df.to_excel("table.xls")
+    debit_df.to_excel("debit.xls", index=False)
+    credit_df.to_excel("credit.xls", index=False)
 
 def get_year(pdf_file: str):
     with pdfplumber.open(pdf_file) as pdf:
@@ -128,6 +135,6 @@ def get_year(pdf_file: str):
     return extracted_text[start_year_straction:end_extraction]
 
 if __name__ == "__main__":
-    pdf_file = "Releve.pdf"
+    pdf_file = "statement.pdf"
     year = get_year(pdf_file)
     plumber(pdf_file, year)
