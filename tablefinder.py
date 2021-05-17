@@ -53,10 +53,19 @@ def extract_table_data(table):
     table_df_temp = table_df_temp.replace("", NAN_VALUE)
     table_df_temp = table_df_temp.drop([0])
     table_df_temp = table_df_temp.dropna(subset=["Date"])
+    
+    # Replace "," to "."
     table_df_temp["Debit"] = table_df_temp["Debit"].str.replace(",", ".")
     table_df_temp["Credit"] = table_df_temp["Credit"].str.replace(",", ".")
+    
+    # Replace " " to ""
+    table_df_temp["Debit"] = table_df_temp["Debit"].str.replace(" ", "")
+    table_df_temp["Credit"] = table_df_temp["Credit"].str.replace(" ", "")
+
+    # Convert dTypes to "float"
     table_df_temp["Debit"] = table_df_temp["Debit"].astype(float)
     table_df_temp["Credit"] = table_df_temp["Credit"].astype(float)
+
     table_df_temp = table_df_temp.reset_index().drop(["index"], axis=1)
     print("Bank data extracted")
 
@@ -115,24 +124,22 @@ def plumber(pdf_file: str, year: str):
     credit_df = credit(table_df)
 
     # Saving results en differents files
-    table_df.to_excel("table.xls")
-    debit_df.to_excel("debit.xls", index=False)
-    credit_df.to_excel("credit.xls", index=False)
+    table_df.to_excel("table.xlsx")
+    debit_df.to_excel("debit.xlsx", index=False)
+    credit_df.to_excel("credit.xlsx", index=False)
 
 def get_year(pdf_file: str):
     with pdfplumber.open(pdf_file) as pdf:
         first_page = pdf.pages[0]
         extracted_text = first_page.extract_text()
         
-        search_eval = re.search("Date d'arrêté", extracted_text)
+        # Regex statements 
+        search_eval = re.search(\
+            "Date d'arrêté : *[0-9]* [a-zéèA-Z]* ([0-9]{4})", extracted_text)
+        year = search_eval.group(1)
+        print("Date d'arrêté : ", year)
 
-        start_extraction = search_eval.end() + 3
-        end_extraction = search_eval.end() + 16
-        start_year_straction = end_extraction - 4
-
-        print("Date d'arrêté : ", extracted_text[start_extraction:end_extraction])
-
-    return extracted_text[start_year_straction:end_extraction]
+    return year
 
 if __name__ == "__main__":
     pdf_file = "statement.pdf"
