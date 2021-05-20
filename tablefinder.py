@@ -135,9 +135,9 @@ def get_year(pdf_file: str):
         
         # Regex statements 
         search_eval = re.search(\
-            "Date d'arrêté : *[0-9]* [a-zéèA-Z]* ([0-9]{4})", extracted_text)
+            " : *[0-9]* [a-zéèûA-Z]* ([0-9]{4})", extracted_text)
         year = search_eval.group(1)
-        print("Date d'arrêté : ", year)
+        print("Date d'arrêté :", year)
 
     return year
 
