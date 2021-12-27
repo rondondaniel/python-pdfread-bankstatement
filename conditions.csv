@@ -7,6 +7,7 @@ Sma,Assurances/Mutuelle
 Malakoff,Assurances/Mutuelle
 Swisslife,Assurances/Mutuelle
 Wab,Loyer
+H24,Loyer
 Fiducial,Services comptables
 Fidexpertise,Services comptables
 Dgfip,Impôts
@@ -14,9 +15,11 @@ Drfip,Impôts
 Fnac,Investissement
 Chausson,Investissement
 Amazon,Investissement
+LDLC,Investissement
 Opco,Taxe Payable
 Atlas,Taxe Payable
 Salaire,Salaires
+Salaires,Salaires
 Msft,Hébergeur web et stockage
 OVH,Hébergeur web et stockage
 Namecheap,Hébergeur web et stockage
@@ -27,8 +30,12 @@ Bureau Vallee,Fournitures
 Paypal,Autres
 Chèque,Autres
 Airdeco,Sous-traitance
-ma-domiciliation.fr,Publicité et Marketing
+ma-domiciliation.fr,Publicité
+hootsuite,Publicité
 URSSAF,Charges sociales
 AG2R Reunica,Charges sociales
 Selfinnov,Juridique et audits
+Innov,Juridique et audits
 Laventure,Juridique et audits
+Aquinov,Juridique et audits
+G Collect,Juridique et audits

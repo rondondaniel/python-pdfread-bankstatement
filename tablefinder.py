@@ -1,6 +1,8 @@
 import pdfplumber
 import pandas as pd
 import re
+import glob
+import os
 
 NAN_VALUE = float("NaN")
 
@@ -8,12 +10,11 @@ def credit(table_df):
     table_df_temp = table_df.dropna(subset=["Credit"])
     table_df_temp = table_df_temp.drop(["Debit"], axis=1)
     table_df_temp = table_df_temp.reset_index()
-    table_df_temp.columns = ["Payment Number Suffix",\
-                             "Date",\
-                             "Description",\
-                             "Amount",\
-                             "Customer Name"
-                             ]
+    table_df_temp.columns = ["Payment Number Suffix",
+                             "Date",
+                             "Description",
+                             "Amount",
+                             "Customer Name",]
     print("Credit data extracted")
 
     return table_df_temp
@@ -26,26 +27,26 @@ def debit(table_df):
     table_df_temp["Taxe Percentage"] = int(20)
     table_df_temp["Currency Code"] = "EUR"
     table_df_temp = table_df_temp.reset_index()
-    table_df_temp.columns = ["Entry Number",\
-                             "Expense Date",\
-                             "Expense Description",\
-                             "Expense Amount",\
-                             "Expense Account",\
-                             "is Inclusive Tax",\
-                             "Tax Name",\
-                             "Tax Percentage", \
-                             "Currency Code",\
-                             ]
+    table_df_temp.columns = ["Entry Number",
+                             "Expense Date",
+                             "Expense Description",
+                             "Expense Amount",
+                             "Expense Account",
+                             "is Inclusive Tax",
+                             "Tax Name",
+                             "Tax Percentage", 
+                             "Currency Code",]
+
     print("Debit data extracted")
 
     return table_df_temp
 
 def extract_table_data(table):
-    table_df_temp = pd.DataFrame(table, columns=["ope",\
-                                                 "Date",\
-                                                 "Libelle",\
-                                                 "Debit",\
-                                                 "Credit",\
+    table_df_temp = pd.DataFrame(table, columns=["ope",
+                                                 "Date",
+                                                 "Libelle",
+                                                 "Debit",
+                                                 "Credit",
                                                  "Check"])
 
      # Cleaning Data Frame
@@ -76,12 +77,31 @@ def get_conditions():
 
     return conditions_df
 
-def plumber(pdf_file: str, year: str):
+def folder_creator(pdf_file: str):
+    file_name, _ = pdf_file.split(".")
+
+    if not os.path.exists(file_name):
+        file_folder = os.mkdir(file_name)
+    else:
+        file_folder = file_name
+
+    return file_folder
+
+# function doing the job
+def plumber(pdf_file: str,
+            year: str):
+    
+    print("{} analyze".format(pdf_file))
+
     with pdfplumber.open(pdf_file) as pdf:
         # Create Data Frame
-        table_df = \
-            pd.DataFrame(columns=["Date", "Libelle",\
-                 "Debit", "Credit"])
+        table_df = pd.DataFrame(columns=[
+                                         "Date",
+                                         "Libelle",
+                                         "Debit",
+                                         "Credit"
+                                        ])
+
         conditions_df = get_conditions()
 
         # Read pdf file & extract table
@@ -101,32 +121,37 @@ def plumber(pdf_file: str, year: str):
             table_df_temp = extract_table_data(table)
             table_df = table_df.append(table_df_temp).reset_index()\
                 .drop(["index"], axis=1)
+
             # keep the index but changing the name to Entry Number
 
     # Modify Date format from DD.MM to YYYY-MM-DD and adding other informations
     table_df["Date"] = year + "-" + table_df["Date"].astype(str).str[3:5] \
-                        + "-"+ table_df["Date"].astype(str).str[0:2]
+                        + "-" + table_df["Date"].astype(str).str[0:2]
 
     table_df["Compte"]= NAN_VALUE
 
     for condition in range(0, conditions_df.shape[0]):
-        index_values \
-             = (table_df[table_df["Libelle"].str\
-                .contains(conditions_df["Condition"].loc[condition])]\
-                .index.values)
+        index_values = (table_df[table_df["Libelle"].str\
+                        .contains(conditions_df["Condition"].loc[condition])]\
+                        .index.values)
 
         for index in index_values:
-            table_df["Compte"].loc[index]\
-                 = conditions_df["Compte"].loc[condition]
+            table_df["Compte"].loc[index] = conditions_df["Compte"].loc[condition]
 
     # Separing Debit and Credit data
     debit_df = debit(table_df)
     credit_df = credit(table_df)
 
-    # Saving results en differents files
-    table_df.to_excel("table.xlsx")
-    debit_df.to_excel("debit.xlsx", index=False)
-    credit_df.to_excel("credit.xlsx", index=False)
+    # Create folder for results
+    folder = folder_creator(pdf_file)
+    print(os.path.join(folder, "/table.xlsx"))
+
+    # Saving results in different files
+    table_df.to_excel(os.path.join(folder, "/table.xlsx"))
+
+    debit_df.to_excel(os.path.join(folder, "/debit.xlsx"), index=False)
+
+    credit_df.to_excel(os.path.join(folder, "/credit.xlsx"), index=False)
 
 def get_year(pdf_file: str):
     with pdfplumber.open(pdf_file) as pdf:
@@ -134,14 +159,22 @@ def get_year(pdf_file: str):
         extracted_text = first_page.extract_text()
         
         # Regex statements 
-        search_eval = re.search(\
-            " : *[0-9]* [a-zéèûA-Z]* ([0-9]{4})", extracted_text)
+        search_eval = re.search(
+            " : *[0-9]* [a-zéèûA-Z]* ([0-9]{4})",
+            extracted_text
+            )
+
         year = search_eval.group(1)
         print("Date d'arrêté :", year)
 
     return year
 
 if __name__ == "__main__":
-    pdf_file = "statement.pdf"
-    year = get_year(pdf_file)
-    plumber(pdf_file, year)
+    pdf_files = glob.glob("*.pdf")
+    print(pdf_files)
+
+    for pdf_file in pdf_files:
+        #folder_creator(pdf_file)
+        year = get_year(pdf_file)
+        plumber(pdf_file,
+                year)
