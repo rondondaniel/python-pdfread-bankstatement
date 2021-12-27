@@ -81,11 +81,9 @@ def folder_creator(pdf_file: str):
     file_name, _ = pdf_file.split(".")
 
     if not os.path.exists(file_name):
-        file_folder = os.mkdir(file_name)
-    else:
-        file_folder = file_name
+        os.mkdir(file_name)
 
-    return file_folder
+    return file_name
 
 # function doing the job
 def plumber(pdf_file: str,
@@ -144,14 +142,13 @@ def plumber(pdf_file: str,
 
     # Create folder for results
     folder = folder_creator(pdf_file)
-    print(os.path.join(folder, "/table.xlsx"))
 
     # Saving results in different files
-    table_df.to_excel(os.path.join(folder, "/table.xlsx"))
+    table_df.to_excel("{}/{}".format(folder, "table.xlsx"))
 
-    debit_df.to_excel(os.path.join(folder, "/debit.xlsx"), index=False)
+    debit_df.to_excel("{}/{}".format(folder, "debit.xlsx"), index=False)
 
-    credit_df.to_excel(os.path.join(folder, "/credit.xlsx"), index=False)
+    credit_df.to_excel("{}/{}".format(folder, "credit.xlsx"), index=False)
 
 def get_year(pdf_file: str):
     with pdfplumber.open(pdf_file) as pdf:
