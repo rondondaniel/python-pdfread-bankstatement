@@ -1,0 +1,2 @@
+pdfplumber==0.5.27
+pandas==1.1.5
