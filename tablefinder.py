@@ -108,30 +108,29 @@ def plumber(pdf_file: str,
         for page_number, page in enumerate(pages):
             print("Analyzing page {}".format(page_number + 1))
 
-            table = page.extract_table(table_settings={
-                        "vertical_strategy": "lines",
-                        "horizontal_strategy": "lines",
-                        "explicit_horizontal_lines":\
-                             [ min(x["top"] for x in page.edges) ]
-                        })
+            try:
+                table = page.extract_table(table_settings={
+                            "vertical_strategy": "lines",
+                            "horizontal_strategy": "lines",
+                            "explicit_horizontal_lines": [ min(x["top"] for x in page.edges) ]
+                            })
+            except ValueError:
+                print("No table detected.")
+                break
 
             # Cleaning table & Appending Table Data Frame
             table_df_temp = extract_table_data(table)
-            table_df = table_df.append(table_df_temp).reset_index()\
-                .drop(["index"], axis=1)
+            table_df = table_df.append(table_df_temp).reset_index().drop(["index"], axis=1)
 
             # keep the index but changing the name to Entry Number
 
     # Modify Date format from DD.MM to YYYY-MM-DD and adding other informations
-    table_df["Date"] = year + "-" + table_df["Date"].astype(str).str[3:5] \
-                        + "-" + table_df["Date"].astype(str).str[0:2]
+    table_df["Date"] = year + "-" + table_df["Date"].astype(str).str[3:5] + "-" + table_df["Date"].astype(str).str[0:2]
 
     table_df["Compte"]= NAN_VALUE
 
     for condition in range(0, conditions_df.shape[0]):
-        index_values = (table_df[table_df["Libelle"].str\
-                        .contains(conditions_df["Condition"].loc[condition])]\
-                        .index.values)
+        index_values = (table_df[table_df["Libelle"].str.contains(conditions_df["Condition"].loc[condition])].index.values)
 
         for index in index_values:
             table_df["Compte"].loc[index] = conditions_df["Compte"].loc[condition]
